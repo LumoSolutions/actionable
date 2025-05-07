@@ -2,23 +2,13 @@
 
 namespace {{ namespace }};
 
+use LumoSolutions\Actionable\Traits\ArrayConvertible;
+
 class {{ class }}
 {
+    use ArrayConvertible;
+
     public function __construct(
         // public string $property,
     ) {}
-
-    public static function fromArray(array $data): static
-    {
-        return new static(
-            //property: $data['property'],
-        );
-    }
-
-    public function toArray(): array
-    {
-        return [
-            //'property' => $this->property,
-        ];
-    }
 }

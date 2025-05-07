@@ -2,8 +2,13 @@
 
 namespace {{ namespace }};
 
-class {{ class }}
+use LumoSolutions\Actionable\Action;
+use LumoSolutions\Actionable\Traits\Runnable;
+
+class {{ class }} extends Action
 {
+    use Runnable;
+
     public function execute(): mixed
     {
         // Action logic here
