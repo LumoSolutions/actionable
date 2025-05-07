@@ -1,0 +1,23 @@
+{
+    "name": "lumosolutions/actionable",
+    "description": "A series of helpers for Laravel to introduce Actions and DTOs, along with associated helpers",
+    "autoload": {
+        "psr-4": {
+            "LumoSolutions\\Actionable\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "LumoSolutions",
+            "email": "info@lumosolutions.org"
+        }
+    ],
+    "require": {},
+    "extra": {
+        "laravel": {
+            "providers": [
+                "LumoSolutions\\Actionable\\ActionableServiceProvider"
+            ]
+        }
+    }
+}

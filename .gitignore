@@ -1,0 +1,36 @@
+# Dependencies
+/vendor
+composer.lock
+package-lock.json
+yarn.lock
+node_modules/
+
+# IDE & OS specific files
+.idea
+.vscode
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Laravel specific
+.env
+.env.backup
+/public/hot
+/public/storage
+/storage/*.key
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+
+# Logs & temp files
+*.log
+/logs
+/temp
+.php_cs.cache
+.php-cs-fixer.cache
+
+# Build artifacts
+/build
+/dist
+/coverage
