@@ -9,7 +9,7 @@ class {{ class }} extends Action
 {
     use Runnable;
 
-    public function execute(): mixed
+    public function handle(): void
     {
         // Action logic here
     }
