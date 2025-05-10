@@ -3,10 +3,11 @@
 namespace {{ namespace }};
 
 use LumoSolutions\Actionable\Traits\IsRunnable;
+use LumoSolutions\Actionable\Traits\IsDispatchable;
 
 class {{ class }}
 {
-    use IsRunnable;
+    use IsRunnable, IsDispatchable;
 
     public function handle(): void
     {
