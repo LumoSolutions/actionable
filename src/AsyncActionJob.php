@@ -13,6 +13,7 @@ class AsyncActionJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected string $actionClass;
+
     protected array $params;
 
     public function __construct(string $actionClass, array $params = [])

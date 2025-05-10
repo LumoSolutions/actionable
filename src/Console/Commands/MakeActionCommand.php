@@ -6,7 +6,9 @@ use LumoSolutions\Actionable\Console\BaseStubCommand;
 
 class MakeActionCommand extends BaseStubCommand
 {
-    protected $signature = 'make:action {name} {--invokable : Generate an invokable action}';
+    protected $signature = 'make:action {name}
+                           {--invokable : Generate an invokable action}
+                           {--dispatchable : Generate a dispatchable action}';
 
     protected $description = 'Create a new Action class';
 
@@ -24,14 +26,19 @@ class MakeActionCommand extends BaseStubCommand
     {
         return [
             'invokable' => $this->option('invokable') ?? false,
+            'dispatchable' => $this->option('dispatchable') ?? false,
         ];
     }
 
     protected function getStubPath(array $options): string
     {
-        $stubName = $options['invokable']
-            ? 'action.invokable.stub'
-            : 'action.stub';
+        if ($options['dispatchable']) {
+            $stubName = 'action.dispatchable.stub';
+        } elseif ($options['invokable']) {
+            $stubName = 'action.invokable.stub';
+        } else {
+            $stubName = 'action.stub';
+        }
 
         return $this->resolveStubPath($stubName);
     }

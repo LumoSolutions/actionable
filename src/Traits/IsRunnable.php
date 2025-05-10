@@ -9,6 +9,7 @@ trait IsRunnable
         // Create a new instance of the class using Laravel's container
         // to support dependency injection, then call the execute method
         $instance = app(static::class);
+
         return $instance->handle(...$params) ?? null;
     }
 }
