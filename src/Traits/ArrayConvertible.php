@@ -2,15 +2,17 @@
 
 namespace LumoSolutions\Actionable\Traits;
 
+use LumoSolutions\Actionable\Conversion\DataConverter;
+
 trait ArrayConvertible
 {
     public static function fromArray(array $data): static
     {
-        return new static(...$data);
+        return DataConverter::fromArray(static::class, $data);
     }
 
     public function toArray(): array
     {
-        return get_object_vars($this);
+        return DataConverter::toArray($this);
     }
 }
