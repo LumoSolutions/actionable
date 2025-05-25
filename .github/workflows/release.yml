@@ -5,38 +5,9 @@ on:
     types: [published]
 
 jobs:
-  code-quality:
-    runs-on: ubuntu-latest
-    name: Code Quality Check
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
-          coverage: none
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.composer/cache/files
-          key: dependencies-composer-${{ hashFiles('composer.json') }}
-
-      - name: Install Composer dependencies
-        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-
-      - name: Run Laravel Pint
-        run: ./vendor/bin/pint --test
-
   submit-to-packagist:
     runs-on: ubuntu-latest
     name: Submit to Packagist
-    needs: code-quality
-    if: success()
 
     steps:
       - name: Submit package to Packagist

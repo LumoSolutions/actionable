@@ -8,6 +8,12 @@ use LumoSolutions\Actionable\Analysis\FieldMetadata;
 
 class DataConverter
 {
+    /**
+     * @template T of object
+     *
+     * @param  class-string<T>  $className
+     * @return T
+     */
     public static function fromArray(string $className, array $data): object
     {
         $metadata = FieldAnalyzer::analyzeClass($className);
@@ -40,10 +46,6 @@ class DataConverter
     {
         if (isset($data[$field->fieldName])) {
             return $data[$field->fieldName];
-        }
-
-        if ($field->allowsNull) {
-            return null;
         }
 
         if ($field->hasDefault) {

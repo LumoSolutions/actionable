@@ -1,0 +1,14 @@
+<?php
+
+namespace {{ namespace }};
+
+use LumoSolutions\Actionable\Traits\ArrayConvertible;
+
+readonly class {{ class }}
+{
+    use ArrayConvertible;
+
+    public function __construct(
+        // public string $property,
+    ) {}
+}

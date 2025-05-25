@@ -3,8 +3,11 @@
 namespace LumoSolutions\Actionable\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+
+use function Illuminate\Filesystem\join_paths;
 
 abstract class BaseStubCommand extends Command
 {
@@ -13,40 +16,36 @@ abstract class BaseStubCommand extends Command
         return 'App\\';
     }
 
-    protected function subDirectory(): string
-    {
-        return '';
-    }
+    abstract protected function subDirectory(): string;
 
     public static function packageStubBasePath(): string
     {
-        return __DIR__.'/../stubs';
+        return join_paths(__DIR__, '..', '..', 'stubs');
     }
 
     public static function applicationStubBasePath(): string
     {
-        return base_path('stubs/lumosolutions/actionable');
+        return join_paths(base_path(), 'stubs', 'lumosolutions', 'actionable');
     }
 
     protected function resolveStubPath(string $stubName): string
     {
-        $applicationStubPath = self::applicationStubBasePath().'/'.$stubName;
+        $applicationStubPath = join_paths(self::applicationStubBasePath(), $stubName);
 
-        // If the specific stub exists in the application, use it
         if (File::exists($applicationStubPath)) {
             return $applicationStubPath;
         }
 
         // Otherwise, use the package stub
-        return self::packageStubBasePath().'/'.$stubName;
+        return join_paths(self::packageStubBasePath(), $stubName);
     }
 
     /**
      * Handle the command execution.
      *
-     * @return int
+     * @throws FileNotFoundException
      */
-    public function handle()
+    public function handle(): int
     {
         $name = $this->argument('name');
         $stubOptions = $this->getStubOptions();
@@ -76,7 +75,7 @@ abstract class BaseStubCommand extends Command
         }
 
         // Check if the file already exists
-        if (File::exists($path) && ! $this->option('force')) {
+        if (File::exists($path)) {
             $this->error($this->getTypeDescription()." {$className} already exists!");
 
             return 1;
@@ -93,10 +92,7 @@ abstract class BaseStubCommand extends Command
     /**
      * Get a description of the type being created for display in messages.
      */
-    protected function getTypeDescription(): string
-    {
-        return 'Class';
-    }
+    abstract protected function getTypeDescription(): string;
 
     /**
      * Get the stub options based on command arguments and options.
@@ -109,10 +105,7 @@ abstract class BaseStubCommand extends Command
     /**
      * Get the stub path based on the provided options.
      */
-    protected function getStubPath(array $options): string
-    {
-        return $this->stubBasePath().'/default.stub';
-    }
+    abstract protected function getStubPath(array $options): string;
 
     /**
      * Replace all variables in the stub file.
@@ -137,7 +130,7 @@ abstract class BaseStubCommand extends Command
     {
         $name = Str::replaceFirst($this->rootNamespace(), '', $name);
 
-        return app_path(str_replace('\\', '/', $name).'.php');
+        return app_path(str_replace('\\', DIRECTORY_SEPARATOR, $name).'.php');
     }
 
     /**

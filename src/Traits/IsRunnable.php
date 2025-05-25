@@ -10,6 +10,6 @@ trait IsRunnable
         // to support dependency injection, then call the execute method
         $instance = app(static::class);
 
-        return $instance->handle(...$params) ?? null;
+        return $instance->handle(...$params);
     }
 }
