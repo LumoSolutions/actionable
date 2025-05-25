@@ -4,6 +4,7 @@ namespace LumoSolutions\Actionable;
 
 use Illuminate\Support\ServiceProvider;
 use LumoSolutions\Actionable\Console\BaseStubCommand;
+use LumoSolutions\Actionable\Console\Commands\ActionsIdeHelperCommand;
 use LumoSolutions\Actionable\Console\Commands\MakeActionCommand;
 use LumoSolutions\Actionable\Console\Commands\MakeDtoCommand;
 
@@ -17,6 +18,7 @@ class ActionableProvider extends ServiceProvider
             $this->commands([
                 MakeActionCommand::class,
                 MakeDtoCommand::class,
+                ActionsIdeHelperCommand::class,
             ]);
 
             $this->publishes(
