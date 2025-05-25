@@ -12,7 +12,8 @@ class MakeActionCommand extends BaseStubCommand
 
     protected $description = 'Create a new Action class';
 
-    protected function subDirectory(): string {
+    protected function subDirectory(): string
+    {
         return 'Actions';
     }
 
