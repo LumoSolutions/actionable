@@ -326,20 +326,6 @@ class RegisterUser
 }
 ```
 
-## 🤝 Why We Think You Will Love Actionable
-
-### 🧪 **Testability First**
-Each action is a single unit - mock dependencies, test in isolation, achieve 100% coverage with ease.
-
-### 📐 **Single Responsibility**
-One action, one job. Your code stays focused and maintainable.
-
-### 🔁 **Reusability**
-Use the same action in controllers, commands, jobs, or other actions. Write once, use everywhere.
-
-### 📈 **Scalability**
-Start simple with synchronous actions, scale to queues when needed. No refactoring required!
-
 ## 🤲 Contributing
 
 We love contributions! Whether it's a bug fix, new feature, or improvement to our docs - we appreciate it all.  Please feel free to submit a pull request or open an issue.
