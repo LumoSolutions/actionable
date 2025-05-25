@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\File;
 use LumoSolutions\Actionable\ActionableProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
+use function Illuminate\Filesystem\join_paths;
+
 abstract class TestCase extends Orchestra
 {
     protected function setUp(): void
@@ -35,8 +37,8 @@ abstract class TestCase extends Orchestra
 
     protected function copyStubs(): void
     {
-        $source = __DIR__.'\\Unit\\Console\\Configuration\\stubs';
-        $destination = base_path('stubs\\lumosolutions\\actionable');
+        $source = join_paths(__DIR__, 'Unit', 'Console', 'Configuration', 'stubs');
+        $destination = join_paths(base_path(), 'stubs', 'lumosolutions', 'actionable');
 
         if (! is_dir($destination)) {
             File::makeDirectory($destination, 0755, true);

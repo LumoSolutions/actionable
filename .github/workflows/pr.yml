@@ -4,15 +4,88 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
-
 jobs:
-  ci:
+  lint:
     runs-on: ubuntu-latest
-    name: Code Quality & Testing
+    name: Code Formatting
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache/files
+          key: dependencies-composer-${{ hashFiles('composer.json') }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run Laravel Pint
+        run: ./vendor/bin/pint --test --verbose
+
+  phpstan:
+    runs-on: ubuntu-latest
+    name: Static Analysis
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache/files
+          key: dependencies-composer-${{ hashFiles('composer.json') }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run PHPStan
+        run: ./vendor/bin/phpstan analyse
+
+  tests:
+    runs-on: ubuntu-latest
+    name: Unit Tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache/files
+          key: dependencies-composer-${{ hashFiles('composer.json') }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run Unit Tests
+        run: ./vendor/bin/pest
+
+  coverage:
+    runs-on: ubuntu-latest
+    name: Test Coverage
 
     steps:
       - name: Checkout code
@@ -34,63 +107,5 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-      - name: Run Laravel Pint
-        id: pint
-        run: ./vendor/bin/pint --test --verbose
-
-      - name: Run PHPStan
-        id: phpstan
-        run: ./vendor/bin/phpstan analyse --error-format=github
-
-      - name: Run Unit Tests
-        id: tests
-        run: ./vendor/bin/pest
-
       - name: Run Test Coverage
-        id: coverage
         run: ./vendor/bin/pest --coverage --min=80
-
-      - name: Add PR comment on failure
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { steps } = context.payload.workflow_run || {};
-            let failureMessage = '**CI Pipeline Failed**\n\n';
-
-            if (steps?.pint?.conclusion === 'failure') {
-              failureMessage += '❌ **Code Formatting Issues**\nPlease run `./vendor/bin/pint` to fix formatting issues.\n\n';
-            }
-
-            if (steps?.phpstan?.conclusion === 'failure') {
-              failureMessage += '❌ **Static Analysis Issues**\nPlease run `./vendor/bin/phpstan analyse` and fix the reported issues.\n\n';
-            }
-
-            if (steps?.tests?.conclusion === 'failure') {
-              failureMessage += '❌ **Test Failures**\nSome tests are failing. Please run `./vendor/bin/pest` locally and fix the failing tests.\n\n';
-            }
-
-            if (steps?.coverage?.conclusion === 'failure') {
-              failureMessage += '❌ **Insufficient Test Coverage**\nTest coverage is below the required threshold. Please add more tests.\n\n';
-            }
-
-            failureMessage += 'Please address these issues before merging.';
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: failureMessage
-            });
-
-      - name: Add success comment
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ **All checks passed!**\n\n- Code formatting ✓\n- Static analysis ✓\n- Unit tests ✓\n- Coverage requirements ✓\n\nThis PR is ready for review!'
-            });
