@@ -1,7 +1,4 @@
 # ⚡ Actionable
-
-> **Transform your Laravel code into clean, testable, and reusable actions.** Say goodbye to bloated controllers and hello to elegantly organized business logic!
-
 <div align="center">
 
 [![CI Pipeline](https://github.com/LumoSolutions/actionable/actions/workflows/build.yml/badge.svg)](https://github.com/LumoSolutions/actionable/actions/workflows/build.yml)
@@ -13,6 +10,10 @@
 **[Installation](#-installation)** • **[Quick Start](#-quick-start)** • **[Features](#-key-features)** • **[Documentation](#-documentation)** • **[Examples](#-real-world-examples)**
 
 </div>
+
+![hero](https://github.com/user-attachments/assets/9d7e5e3b-cb82-4fff-a242-847d16051d18)
+
+> **Transform your Laravel code into clean, testable, and reusable actions.** Say goodbye to bloated controllers and hello to elegantly organized business logic!
 
 ## 💡 Why Actionable?
 
