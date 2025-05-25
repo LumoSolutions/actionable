@@ -54,10 +54,10 @@ jobs:
           body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
 
           if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 202 ]; then
-            echo "✅ Package submitted to Packagist successfully!"
+            echo "Package submitted to Packagist successfully!"
             echo "HTTP Status: $http_code"
           else
-            echo "❌ Failed to submit package to Packagist"
+            echo "Failed to submit package to Packagist"
             echo "HTTP Status: $http_code"
             echo "Response: $body"
             exit 1
