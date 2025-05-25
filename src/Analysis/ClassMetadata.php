@@ -2,13 +2,13 @@
 
 namespace LumoSolutions\Actionable\Analysis;
 
-class ClassMetadata
+readonly class ClassMetadata
 {
     /** @var FieldMetadata[] */
-    public readonly array $constructorFields;
+    public array $constructorFields;
 
     /** @var FieldMetadata[] */
-    public readonly array $properties;
+    public array $properties;
 
     /**
      * @param  FieldMetadata[]  $constructorFields
@@ -18,28 +18,6 @@ class ClassMetadata
     {
         $this->constructorFields = $constructorFields;
         $this->properties = $properties;
-    }
-
-    public function getConstructorField(string $propertyName): ?FieldMetadata
-    {
-        foreach ($this->constructorFields as $field) {
-            if ($field->propertyName === $propertyName) {
-                return $field;
-            }
-        }
-
-        return null;
-    }
-
-    public function getProperty(string $propertyName): ?FieldMetadata
-    {
-        foreach ($this->properties as $property) {
-            if ($property->propertyName === $propertyName) {
-                return $property;
-            }
-        }
-
-        return null;
     }
 
     public function getVisibleProperties(): array

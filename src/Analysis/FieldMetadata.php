@@ -2,18 +2,18 @@
 
 namespace LumoSolutions\Actionable\Analysis;
 
-class FieldMetadata
+readonly class FieldMetadata
 {
     public function __construct(
-        public readonly string $propertyName,
-        public readonly string $fieldName,
-        public readonly ?string $type = null,
-        public readonly bool $ignore = false,
-        public readonly ?string $dateFormat = null,
-        public readonly ?string $arrayOf = null,
-        public readonly bool $hasDefault = false,
-        public readonly mixed $defaultValue = null,
-        public readonly bool $allowsNull = false
+        public string $propertyName,
+        public string $fieldName,
+        public ?string $type = null,
+        public bool $ignore = false,
+        public ?string $dateFormat = null,
+        public ?string $arrayOf = null,
+        public bool $hasDefault = false,
+        public mixed $defaultValue = null,
+        public bool $allowsNull = false
     ) {}
 
     public function isDateTime(): bool

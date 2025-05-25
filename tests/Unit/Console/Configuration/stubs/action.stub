@@ -1,0 +1,15 @@
+<?php
+
+namespace {{ namespace }};
+
+use LumoSolutions\Actionable\Traits\IsRunnable;
+
+class {{ class }}
+{
+    use IsRunnable;
+
+    public function handle(): void
+    {
+        // This is a custom application stub
+    }
+}

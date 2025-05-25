@@ -34,3 +34,6 @@ Homestead.yaml
 /build
 /dist
 /coverage
+
+# Miscellaneous
+/.phpunit.cache

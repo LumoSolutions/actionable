@@ -1,4 +1,4 @@
-name: Lint Check
+name: CI Pipeline
 
 on:
   pull_request:
@@ -10,9 +10,9 @@ permissions:
   pull-requests: write
 
 jobs:
-  lint:
+  ci:
     runs-on: ubuntu-latest
-    name: Code Linting
+    name: Code Quality & Testing
 
     steps:
       - name: Checkout code
@@ -22,8 +22,8 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
-          coverage: none
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, xdebug
+          coverage: xdebug
 
       - name: Cache Composer dependencies
         uses: actions/cache@v3
@@ -35,10 +35,56 @@ jobs:
         run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
       - name: Run Laravel Pint
+        id: pint
         run: ./vendor/bin/pint --test --verbose
+
+      - name: Run PHPStan
+        id: phpstan
+        run: ./vendor/bin/phpstan analyse --error-format=github
+
+      - name: Run Unit Tests
+        id: tests
+        run: ./vendor/bin/pest
+
+      - name: Run Test Coverage
+        id: coverage
+        run: ./vendor/bin/pest --coverage --min=80
 
       - name: Add PR comment on failure
         if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { steps } = context.payload.workflow_run || {};
+            let failureMessage = '**CI Pipeline Failed**\n\n';
+
+            if (steps?.pint?.conclusion === 'failure') {
+              failureMessage += '❌ **Code Formatting Issues**\nPlease run `./vendor/bin/pint` to fix formatting issues.\n\n';
+            }
+
+            if (steps?.phpstan?.conclusion === 'failure') {
+              failureMessage += '❌ **Static Analysis Issues**\nPlease run `./vendor/bin/phpstan analyse` and fix the reported issues.\n\n';
+            }
+
+            if (steps?.tests?.conclusion === 'failure') {
+              failureMessage += '❌ **Test Failures**\nSome tests are failing. Please run `./vendor/bin/pest` locally and fix the failing tests.\n\n';
+            }
+
+            if (steps?.coverage?.conclusion === 'failure') {
+              failureMessage += '❌ **Insufficient Test Coverage**\nTest coverage is below the required threshold. Please add more tests.\n\n';
+            }
+
+            failureMessage += 'Please address these issues before merging.';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: failureMessage
+            });
+
+      - name: Add success comment
+        if: success()
         uses: actions/github-script@v7
         with:
           script: |
@@ -46,5 +92,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '**Code formatting issues detected**\n\nPlease run `./vendor/bin/pint` to fix formatting issues before merging.'
-            })
+              body: '✅ **All checks passed!**\n\n- Code formatting ✓\n- Static analysis ✓\n- Unit tests ✓\n- Coverage requirements ✓\n\nThis PR is ready for review!'
+            });

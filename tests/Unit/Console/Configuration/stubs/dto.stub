@@ -9,6 +9,6 @@ class {{ class }}
     use ArrayConvertible;
 
     public function __construct(
-        // public string $property,
+        // This is a custom application stub
     ) {}
 }
