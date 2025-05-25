@@ -37,3 +37,4 @@ Homestead.yaml
 
 # Miscellaneous
 /.phpunit.cache
+coverage.xml

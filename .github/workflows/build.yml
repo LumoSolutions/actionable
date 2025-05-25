@@ -3,6 +3,8 @@ name: CI Pipeline
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   lint:
@@ -108,4 +110,10 @@ jobs:
         run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
       - name: Run Test Coverage
-        run: ./vendor/bin/pest --coverage --min=80
+        run: ./vendor/bin/pest --coverage --coverage-clover ./coverage.xml --min=80
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODE_COV_TOKEN }}
+          files: ./coverage.xml
