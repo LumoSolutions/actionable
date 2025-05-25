@@ -16,7 +16,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "LumoSolutions\\Actionable\\ActionableServiceProvider"
+                "LumoSolutions\\Actionable\\ActionableProvider"
             ]
         }
     }
