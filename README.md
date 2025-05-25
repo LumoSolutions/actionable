@@ -92,7 +92,7 @@ SendWelcomeEmail::run('user@example.com', 'John Doe');
 
 ## 📚 Documentation
 
-### 🎭 Actions
+### ⚡ Actions
 
 Actions are the heart of your application's business logic. They're single-purpose classes that do one thing and do it well.
 
@@ -358,8 +358,8 @@ Actionable is open-sourced software licensed under the [MIT license](LICENSE).
 
 <div align="center">
 
-**Built with ❤️ by [Lumo Solutions](https://lumosolutions.com)**
+**Built with ❤️ by [Lumo Solutions](https://lumosolutions.org)**
 
-*Making Laravel development more enjoyable, one action at a time.*
+*Actionable: Making Laravel development more enjoyable, one action at a time.*
 
 </div>
