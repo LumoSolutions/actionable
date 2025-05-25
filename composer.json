@@ -27,7 +27,7 @@
         "php": ">=8.2"
     },
     "require-dev": {
-        "laravel/pint": "^1.0"
+        "laravel/pint": "^1.22"
     },
     "extra": {
         "laravel": {

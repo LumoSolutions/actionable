@@ -475,8 +475,8 @@ $user = RegisterUser::run($registrationData);
 
 ## Requirements
 
-- PHP 8.1 or higher
-- Laravel 9.0 or higher
+- PHP 8.2 or higher
+- Laravel 12.0 or higher
 
 ## Contributing
 
@@ -489,7 +489,3 @@ This package is open-sourced software licensed under the [MIT license](LICENSE).
 ## Support
 
 If you discover any security vulnerabilities or bugs, please create an issue on GitHub.
-
----
-
-**LumoSolutions** - Making Laravel development more actionable.
