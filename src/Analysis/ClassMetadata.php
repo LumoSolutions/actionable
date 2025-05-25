@@ -11,8 +11,8 @@ class ClassMetadata
     public readonly array $properties;
 
     /**
-     * @param FieldMetadata[] $constructorFields
-     * @param FieldMetadata[] $properties
+     * @param  FieldMetadata[]  $constructorFields
+     * @param  FieldMetadata[]  $properties
      */
     public function __construct(array $constructorFields, array $properties)
     {
@@ -44,6 +44,6 @@ class ClassMetadata
 
     public function getVisibleProperties(): array
     {
-        return array_filter($this->properties, fn(FieldMetadata $field) => !$field->shouldIgnore());
+        return array_filter($this->properties, fn (FieldMetadata $field) => ! $field->shouldIgnore());
     }
 }

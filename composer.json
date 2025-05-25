@@ -1,6 +1,16 @@
 {
     "name": "lumosolutions/actionable",
-    "description": "A series of helpers for Laravel to introduce Actions and DTOs, along with associated helpers",
+    "description": "Provides a clean, elegant way to create dispatchable and runnable actions in Laravel with built-in array conversion capabilities",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "actions",
+        "dispatchable",
+        "runnable",
+        "array conversion"
+    ],
+    "homepage": "https://github.com/lumosolutions/actionable",
     "autoload": {
         "psr-4": {
             "LumoSolutions\\Actionable\\": "src/"
@@ -8,11 +18,17 @@
     },
     "authors": [
         {
-            "name": "LumoSolutions",
-            "email": "info@lumosolutions.org"
+            "name": "Richard Anderson",
+            "email": "richard@lumosolutions.org",
+            "role": "Developer"
         }
     ],
-    "require": {},
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.0"
+    },
     "extra": {
         "laravel": {
             "providers": [

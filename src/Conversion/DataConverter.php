@@ -2,8 +2,9 @@
 
 namespace LumoSolutions\Actionable\Conversion;
 
-use LumoSolutions\Actionable\Analysis\{FieldAnalyzer, ClassMetadata, FieldMetadata};
 use DateTime;
+use LumoSolutions\Actionable\Analysis\FieldAnalyzer;
+use LumoSolutions\Actionable\Analysis\FieldMetadata;
 
 class DataConverter
 {
@@ -61,6 +62,7 @@ class DataConverter
         // Handle DateTime conversion
         if ($field->isDateTime() && is_string($value)) {
             $dateTime = DateTime::createFromFormat($field->dateFormat, $value);
+
             return $dateTime ?: $value;
         }
 
@@ -77,7 +79,7 @@ class DataConverter
             $arrayOfClass = $field->arrayOf;
             if (method_exists($arrayOfClass, 'fromArray')) {
                 return array_map(
-                    fn($item) => is_array($item) ? $arrayOfClass::fromArray($item) : $item,
+                    fn ($item) => is_array($item) ? $arrayOfClass::fromArray($item) : $item,
                     $value
                 );
             }
@@ -104,7 +106,7 @@ class DataConverter
 
         // Handle arrays of objects
         if ($field->isArrayOf() && is_array($value)) {
-            return array_map(function($item) {
+            return array_map(function ($item) {
                 return is_object($item) && method_exists($item, 'toArray')
                     ? $item->toArray()
                     : $item;

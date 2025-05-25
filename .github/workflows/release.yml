@@ -1,0 +1,64 @@
+name: Release Package
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality Check
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache/files
+          key: dependencies-composer-${{ hashFiles('composer.json') }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run Laravel Pint
+        run: ./vendor/bin/pint --test
+
+  submit-to-packagist:
+    runs-on: ubuntu-latest
+    name: Submit to Packagist
+    needs: code-quality
+    if: success()
+
+    steps:
+      - name: Submit package to Packagist
+        env:
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          PACKAGIST_API_TOKEN: ${{ secrets.PACKAGIST_API_TOKEN }}
+          REPOSITORY_URL: https://github.com/${{ github.repository }}
+        run: |
+          response=$(curl -s -w "HTTPSTATUS:%{http_code}" -XPOST \
+            -H'content-type:application/json' \
+            "https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_API_TOKEN}" \
+            -d"{\"repository\":{\"url\":\"${REPOSITORY_URL}\"}}")
+
+          http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
+
+          if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 202 ]; then
+            echo "✅ Package submitted to Packagist successfully!"
+            echo "HTTP Status: $http_code"
+          else
+            echo "❌ Failed to submit package to Packagist"
+            echo "HTTP Status: $http_code"
+            echo "Response: $body"
+            exit 1
+          fi

@@ -2,10 +2,13 @@
 
 namespace LumoSolutions\Actionable\Analysis;
 
-use LumoSolutions\Actionable\Attributes\{FieldName, Ignore, DateFormat, ArrayOf};
+use LumoSolutions\Actionable\Attributes\ArrayOf;
+use LumoSolutions\Actionable\Attributes\DateFormat;
+use LumoSolutions\Actionable\Attributes\FieldName;
+use LumoSolutions\Actionable\Attributes\Ignore;
 use ReflectionClass;
-use ReflectionProperty;
 use ReflectionParameter;
+use ReflectionProperty;
 
 class FieldAnalyzer
 {
@@ -80,8 +83,9 @@ class FieldAnalyzer
     private static function getFieldName(ReflectionParameter|ReflectionProperty $target): string
     {
         $attributes = $target->getAttributes(FieldName::class);
-        if (!empty($attributes)) {
+        if (! empty($attributes)) {
             $fieldNameAttribute = $attributes[0]->newInstance();
+
             return $fieldNameAttribute->name;
         }
 
@@ -90,14 +94,15 @@ class FieldAnalyzer
 
     private static function hasAttribute(ReflectionParameter|ReflectionProperty $target, string $attributeClass): bool
     {
-        return !empty($target->getAttributes($attributeClass));
+        return ! empty($target->getAttributes($attributeClass));
     }
 
     private static function getDateFormat(ReflectionParameter|ReflectionProperty $target): ?string
     {
         $attributes = $target->getAttributes(DateFormat::class);
-        if (!empty($attributes)) {
+        if (! empty($attributes)) {
             $dateFormatAttribute = $attributes[0]->newInstance();
+
             return $dateFormatAttribute->format;
         }
 
@@ -107,8 +112,9 @@ class FieldAnalyzer
     private static function getArrayOf(ReflectionParameter|ReflectionProperty $target): ?string
     {
         $attributes = $target->getAttributes(ArrayOf::class);
-        if (!empty($attributes)) {
+        if (! empty($attributes)) {
             $arrayOfAttribute = $attributes[0]->newInstance();
+
             return $arrayOfAttribute->class;
         }
 
@@ -119,7 +125,7 @@ class FieldAnalyzer
     {
         $type = $target->getType();
 
-        if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+        if ($type instanceof \ReflectionNamedType && ! $type->isBuiltin()) {
             return $type->getName();
         }
 
