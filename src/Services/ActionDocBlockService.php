@@ -258,7 +258,7 @@ class ActionDocBlockService
             }
         }
 
-        return '\\' . $typeName;
+        return '\\'.$typeName;
     }
 
     private function formatDefaultValue($value): string
@@ -292,7 +292,7 @@ class ActionDocBlockService
 
         if ($hasDispatchable) {
             $docBlocks[] = "@method static void dispatch({$parameters})";
-            $docBlocks[] = "@method static void dispatchOn(string \$queue" . ($parameters ? ", {$parameters}" : "") . ")";
+            $docBlocks[] = '@method static void dispatchOn(string $queue'.($parameters ? ", {$parameters}" : '').')';
         }
 
         return $docBlocks;

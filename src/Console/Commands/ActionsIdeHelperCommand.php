@@ -43,23 +43,32 @@ class ActionsIdeHelperCommand extends Command
         $errorCount = 0;
 
         foreach ($files as $file) {
-            $relativePath = str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file->getRealPath());
+            $relativePath = str_replace(base_path().DIRECTORY_SEPARATOR, '', $file->getRealPath());
 
-            $result = $this->service->processFile($file->getPathname(), $dryRun);
+            try {
+                $result = $this->service->processFile($file->getPathname(), $dryRun);
 
-            if ($result['processed']) {
-                $processedCount++;
+                if ($result['processed']) {
+                    $processedCount++;
 
-                if ($dryRun) {
-                    $this->line("<info>Would update:</info> {$relativePath}");
-                    $this->showDocBlockChanges($result['docBlocks']);
+                    if ($dryRun) {
+                        $this->line("<info>Would update:</info> {$relativePath}");
+                        $this->showDocBlockChanges($result['docBlocks']);
+                    } else {
+                        $this->info("Updated: {$relativePath}");
+                    }
                 } else {
-                    $this->info("Updated: {$relativePath}");
+                    $skippedCount++;
+                    if ($this->output->isVerbose()) {
+                        $this->line("<comment>Skipped:</comment> {$relativePath} - {$result['reason']}");
+                    }
                 }
-            } else {
-                $skippedCount++;
-                if ($this->output->isVerbose()) {
-                    $this->line("<comment>Skipped:</comment> {$relativePath} - {$result['reason']}");
+            } catch (Exception $e) {
+                $errorCount++;
+                $this->error("Error processing {$relativePath}: {$e->getMessage()}");
+
+                if ($this->output->isVeryVerbose()) {
+                    $this->line($e->getTraceAsString());
                 }
             }
         }

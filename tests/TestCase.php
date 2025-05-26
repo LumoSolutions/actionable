@@ -20,7 +20,7 @@ abstract class TestCase extends Orchestra
         $directories = [
             app_path('Actions'),
             app_path('Dtos'),
-            join_paths(base_path(), 'stubs', 'lumosolutions', 'actionable')
+            join_paths(base_path(), 'stubs', 'lumosolutions', 'actionable'),
         ];
 
         foreach ($directories as $dir) {
