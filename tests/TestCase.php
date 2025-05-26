@@ -17,19 +17,21 @@ abstract class TestCase extends Orchestra
 
     protected function tearDown(): void
     {
-        // Clean up the app/Actions directory if it exists
-        if (is_dir(app_path('Actions'))) {
-            File::deleteDirectory(app_path('Actions'));
-        }
+        $directories = [
+            app_path('Actions'),
+            app_path('Dtos'),
+            join_paths(base_path(), 'stubs', 'lumosolutions', 'actionable')
+        ];
 
-        // Clean up the app/DTOs directory if it exists
-        if (is_dir(app_path('Dtos'))) {
-            File::deleteDirectory(app_path('Dtos'));
-        }
-
-        // Clean up the stubs directory if it exists
-        if (is_dir(base_path('stubs/lumosolutions/actionable'))) {
-            File::deleteDirectory(base_path('stubs/lumosolutions/actionable'));
+        foreach ($directories as $dir) {
+            if (is_dir($dir)) {
+                File::deleteDirectory($dir);
+                clearstatcache();
+                if (is_dir($dir)) {
+                    dump("Failed to delete directory: {$dir}");
+                    throw new \RuntimeException("Failed to delete directory: {$dir}");
+                }
+            }
         }
 
         parent::tearDown();
@@ -37,7 +39,7 @@ abstract class TestCase extends Orchestra
 
     protected function copyStubs(): void
     {
-        $source = join_paths(__DIR__, 'Unit', 'Console', 'Configuration', 'stubs');
+        $source = join_paths(__DIR__, 'Feature', 'Console', 'Configuration', 'stubs');
         $destination = join_paths(base_path(), 'stubs', 'lumosolutions', 'actionable');
 
         if (! is_dir($destination)) {
@@ -45,6 +47,11 @@ abstract class TestCase extends Orchestra
         }
 
         File::copyDirectory($source, $destination);
+
+        if (! File::exists(join_paths($destination, 'action.stub'))) {
+            dump("Failed to copy stubs to {$destination}");
+            throw new \RuntimeException("Failed to copy stubs to {$destination}");
+        }
     }
 
     protected function getPackageProviders($app): array

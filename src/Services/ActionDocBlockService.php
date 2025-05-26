@@ -63,14 +63,6 @@ class ActionDocBlockService
             $methodInfo['returnType']
         );
 
-        if (empty($docBlocks)) {
-            return [
-                'processed' => false,
-                'reason' => 'No doc blocks to generate',
-                'docBlocks' => [],
-            ];
-        }
-
         $newContent = $this->updateClassDocBlock($content, $docBlocks);
 
         if ($newContent === $content) {
@@ -92,6 +84,15 @@ class ActionDocBlockService
         ];
     }
 
+    private function ensureClassIsLoaded(string $className, string $filePath): void
+    {
+        if (! class_exists($className, false)) {
+            if (File::exists($filePath)) {
+                require_once $filePath;
+            }
+        }
+    }
+
     private function extractClassInfo(string $content, string $filePath): ?array
     {
         $namespace = null;
@@ -111,7 +112,7 @@ class ActionDocBlockService
         $fullClassName = '\\'.$namespace.'\\'.$className;
 
         if (! class_exists($fullClassName)) {
-            return null;
+            $this->ensureClassIsLoaded($fullClassName, $filePath);
         }
 
         $useStatements = $this->parseUseStatements($content);
@@ -153,25 +154,17 @@ class ActionDocBlockService
 
     private function analyzeTraits(string $className): array
     {
-        try {
-            $reflection = new ReflectionClass($className);
-            $traits = $reflection->getTraitNames();
+        $reflection = new ReflectionClass($className);
+        $traits = $reflection->getTraitNames();
 
-            $hasRunnable = in_array($this->targetTraits[0], $traits);
-            $hasDispatchable = in_array($this->targetTraits[1], $traits);
+        $hasRunnable = in_array($this->targetTraits[0], $traits);
+        $hasDispatchable = in_array($this->targetTraits[1], $traits);
 
-            return [
-                'hasTargetTraits' => $hasRunnable || $hasDispatchable,
-                'hasRunnable' => $hasRunnable,
-                'hasDispatchable' => $hasDispatchable,
-            ];
-        } catch (Exception $e) {
-            return [
-                'hasTargetTraits' => false,
-                'hasRunnable' => false,
-                'hasDispatchable' => false,
-            ];
-        }
+        return [
+            'hasTargetTraits' => $hasRunnable || $hasDispatchable,
+            'hasRunnable' => $hasRunnable,
+            'hasDispatchable' => $hasDispatchable,
+        ];
     }
 
     private function analyzeHandleMethod(string $className, array $useStatements): ?array
@@ -265,15 +258,7 @@ class ActionDocBlockService
             }
         }
 
-        if (isset($useStatements[$typeName])) {
-            return $typeName;
-        }
-
-        if (strpos($typeName, '\\') === false) {
-            return $typeName;
-        }
-
-        return $typeName;
+        return '\\' . $typeName;
     }
 
     private function formatDefaultValue($value): string
@@ -307,7 +292,7 @@ class ActionDocBlockService
 
         if ($hasDispatchable) {
             $docBlocks[] = "@method static void dispatch({$parameters})";
-            $docBlocks[] = "@method static void dispatchOn(string \$queue, {$parameters})";
+            $docBlocks[] = "@method static void dispatchOn(string \$queue" . ($parameters ? ", {$parameters}" : "") . ")";
         }
 
         return $docBlocks;
