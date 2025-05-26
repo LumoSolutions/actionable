@@ -45,6 +45,9 @@ Execute business logic with a single, expressive call. No more hunting through s
 ### 📬 **Dispatchable Actions**
 Seamlessly queue your actions for background processing. It's as easy as changing `run()` to `dispatch()`!
 
+### 💡 **Smart Code Completion**
+Full IntelliSense support with auto-completion for runnable and dispatchable actions across all major IDEs.
+
 ### 🔄 **Smart Array Conversion**
 Convert between arrays and objects effortlessly with our powerful attribute system. Perfect for APIs!
 
@@ -247,6 +250,9 @@ php artisan make:action CalculateShipping --invokable
 
 # DTO with array conversion
 php artisan make:dto OrderData
+
+# Enable Smart Code Completion
+php artisan ide-helper:actions
 ```
 
 ## 🌟 Real-World Examples
