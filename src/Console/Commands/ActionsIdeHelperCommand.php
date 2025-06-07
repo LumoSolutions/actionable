@@ -2,10 +2,8 @@
 
 namespace LumoSolutions\Actionable\Console\Commands;
 
-use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
-use LumoSolutions\Actionable\Services\ActionDocBlockService;
+use LumoSolutions\Actionable\Actions\Console\UpdateActionDocBlocks;
 
 class ActionsIdeHelperCommand extends Command
 {
@@ -15,113 +13,85 @@ class ActionsIdeHelperCommand extends Command
 
     protected $description = 'Generate IDE helper doc blocks for Action classes using IsRunnable and IsDispatchable traits';
 
-    protected ActionDocBlockService $service;
-
-    public function __construct(ActionDocBlockService $service)
-    {
-        parent::__construct();
-        $this->service = $service;
-    }
-
     public function handle(): int
     {
-        $namespace = $this->option('namespace');
+        $namespace = rtrim($this->option('namespace'), '\\').'\\';
         $dryRun = $this->option('dry-run');
 
-        $this->info("Scanning for Action classes in namespace: {$namespace} ");
+        $this->info('Scanning actions in namespace: '.$namespace.($dryRun ? ' (dry-run mode)' : ' '));
+        $this->newLine();
 
-        $files = $this->getPhpFiles($namespace);
+        $response = UpdateActionDocBlocks::run($namespace, $dryRun);
 
-        if (empty($files)) {
-            $this->error("No PHP files found in namespace: {$namespace}");
+        if (empty($response)) {
+            $this->info('No actions found or no changes needed.');
 
-            return self::FAILURE;
+            return self::SUCCESS;
         }
 
-        $processedCount = 0;
-        $skippedCount = 0;
-        $errorCount = 0;
+        if ($dryRun) {
+            $this->displayDryRunResults($response);
+        } else {
+            $this->displayUpdateResults($response);
+        }
 
-        foreach ($files as $file) {
-            $relativePath = str_replace(base_path().DIRECTORY_SEPARATOR, '', $file->getRealPath());
+        return self::SUCCESS;
+    }
 
-            try {
-                $result = $this->service->processFile($file->getPathname(), $dryRun);
+    /**
+     * Display the results when in dry-run mode
+     */
+    protected function displayDryRunResults(array $response): void
+    {
+        $this->comment('🔍 Dry-run mode - No files will be modified');
+        $this->newLine();
 
-                if ($result['processed']) {
-                    $processedCount++;
+        $totalChanges = 0;
 
-                    if ($dryRun) {
-                        $this->line("<info>Would update:</info> {$relativePath}");
-                        $this->showDocBlockChanges($result['docBlocks']);
-                    } else {
-                        $this->info("Updated: {$relativePath}");
-                    }
-                } else {
-                    $skippedCount++;
-                    if ($this->output->isVerbose()) {
-                        $this->line("<comment>Skipped:</comment> {$relativePath} - {$result['reason']}");
-                    }
+        foreach ($response as $className => $changes) {
+            $changeCount = count($changes);
+            $totalChanges += $changeCount;
+
+            $this->line("<fg=cyan>$className</> (<fg=yellow>$changeCount changes</>)");
+
+            foreach ($changes as $change) {
+                $type = $change['type'];
+                $line = $change['line'];
+
+                switch ($type) {
+                    case '+':
+                        $this->line("  <fg=green>+ $line</>");
+                        break;
+                    case '-':
+                        $this->line("  <fg=red>- $line</>");
+                        break;
+                    default:
+                        $this->line("  $type $line");
                 }
-            } catch (Exception $e) {
-                $errorCount++;
-                $this->error("Error processing {$relativePath}: {$e->getMessage()}");
+            }
 
-                if ($this->output->isVeryVerbose()) {
-                    $this->line($e->getTraceAsString());
-                }
+            $this->newLine();
+        }
+
+        $this->info("📊 Summary: $totalChanges changes would be made across ".count($response).' files');
+        $this->comment('Run without --dry-run to apply these changes.');
+    }
+
+    /**
+     * Display the results after actual updates
+     */
+    protected function displayUpdateResults(array $response): void
+    {
+        $successful = 0;
+
+        foreach ($response as $className => $result) {
+            if ($result === true) {
+                $successful++;
+                $this->line("<fg=green>✓</> $className");
             }
         }
 
-        $this->showSummary($processedCount, $skippedCount, $errorCount, $dryRun);
-
-        return ($errorCount > 0) ? self::FAILURE : self::SUCCESS;
-    }
-
-    private function getPhpFiles(string $namespace): array
-    {
-        $path = app_path(str_replace(['App\\', '\\'], ['', '/'], $namespace));
-
-        if (! is_dir($path)) {
-            return [];
-        }
-
-        return collect(File::allFiles($path))
-            ->filter(fn ($file) => $file->getExtension() === 'php')
-            ->values()
-            ->all();
-    }
-
-    private function showDocBlockChanges(array $docBlocks): void
-    {
-        if (empty($docBlocks)) {
-            return;
-        }
-
-        $this->line('  <comment>Doc blocks to add:</comment>');
-        foreach ($docBlocks as $docBlock) {
-            $this->line("    <info>*</info> {$docBlock}");
-        }
-    }
-
-    private function showSummary(int $processedCount, int $skippedCount, int $errorCount, bool $dryRun): void
-    {
-        $this->line('');
-        $this->info('Summary:');
-
-        $action = $dryRun ? 'Would be updated' : 'Updated';
-        $this->line("  <info>{$action}:</info> {$processedCount} files");
-
-        if ($skippedCount > 0 || $this->output->isVerbose()) {
-            $this->line("  <comment>Skipped:</comment> {$skippedCount} files");
-        }
-
-        if ($errorCount > 0) {
-            $this->line("  <error>Errors:</error> {$errorCount} files");
-        }
-
-        $this->line('');
-        $status = $errorCount > 0 ? 'completed with errors' : 'completed successfully';
-        $this->info("Process {$status}!");
+        $this->newLine();
+        $this->info("✨ Successfully updated $successful action files!");
     }
 }
