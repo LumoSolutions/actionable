@@ -26,5 +26,16 @@ describe('DTOs', function () {
             expect($dto->name)->toBe('company')
                 ->and($dto->secret)->toBe('api_key');
         });
+
+        it('can collect and not see secret', function () {
+            $dto = IgnoreDto::fromArray([
+                'name' => 'company', 'secret' => 'api_key',
+            ]);
+
+            $collection = $dto->collect();
+
+            expect($collection->has('secret'))->toBeFalse();
+        });
+
     });
 });

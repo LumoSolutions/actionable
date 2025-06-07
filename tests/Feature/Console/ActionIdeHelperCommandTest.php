@@ -15,8 +15,8 @@ describe('Console', function () {
                 '--dry-run' => true,
             ])
                 ->assertExitCode(0)
-                ->expectsOutputToContain('Scanning for Action classes in namespace: App\\Actions')
-                ->expectsOutputToContain(join_paths('app', 'Actions', 'Test1.php'));
+                ->expectsOutputToContain('Scanning actions in namespace: App\\Actions\\')
+                ->expectsOutputToContain('App\\Actions\\Test1');
         });
 
         it('identifies and documents run in action', function () {
@@ -145,14 +145,14 @@ describe('Console', function () {
                 'use LumoSolutions\\Actionable\\Traits\\IsDispatchable;',
                 implode(PHP_EOL, [
                     'use LumoSolutions\\Actionable\\Traits\\IsDispatchable;',
-                    'use App\\Actions\\Testing\\Test8;',
+                    'use App\\Actions\\DifferentDir\\Test8;',
                     'use App\\Actions\\AnotherFolder\\Test9 as DoesWork;',
                 ]),
                 $actionPath
             );
             File::replaceInFile(
                 'public function handle(): void',
-                'public function handle(Test8 $action, DoesWork $test): void',
+                'public function handle(Test8 $action, DoesWork $test): DoesWork',
                 $actionPath
             );
 
@@ -161,7 +161,7 @@ describe('Console', function () {
                 '--dry-run' => true,
             ])
                 ->assertExitCode(0)
-                ->expectsOutputToContain('@method static void run(Test8 $action, DoesWork $test)')
+                ->expectsOutputToContain('@method static DoesWork run(Test8 $action, DoesWork $test)')
                 ->expectsOutputToContain('@method static void dispatch(Test8 $action, DoesWork $test)')
                 ->expectsOutputToContain('@method static void dispatchOn(string $queue, Test8 $action, DoesWork $test)');
 
@@ -169,7 +169,7 @@ describe('Console', function () {
                 ->assertExitCode(0);
 
             $fileContents = file_get_contents($actionPath);
-            expect($fileContents)->toContain('@method static void run(Test8 $action, DoesWork $test)')
+            expect($fileContents)->toContain('@method static DoesWork run(Test8 $action, DoesWork $test)')
                 ->and($fileContents)->toContain('@method static void dispatch(Test8 $action, DoesWork $test)')
                 ->and($fileContents)->toContain('@method static void dispatchOn(string $queue, Test8 $action, DoesWork $test)');
         });
@@ -180,7 +180,7 @@ describe('Console', function () {
 
             File::replaceInFile(
                 'public function handle(): void',
-                "public function handle(string \$default = 'test', string \$can_null = null, array \$arr = []): void",
+                "public function handle(string \$default = 'test', ?string \$can_null = null, array \$arr = []): void",
                 $actionPath
             );
 
@@ -242,7 +242,7 @@ describe('Console', function () {
 
         it('handles no files', function () {
             $this->artisan(ActionsIdeHelperCommand::class, ['--namespace' => 'App\\Actions\\DoesNotExist'])
-                ->assertExitCode(1);
+                ->assertExitCode(0);
         });
 
         it('handles action without handle method', function () {
@@ -258,5 +258,279 @@ describe('Console', function () {
             expect($fileContents)->not->toContain('@method static void run');
         });
 
+        it('handles notification of removed docblocks', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test14', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test14.php');
+
+            File::replaceInFile(
+                'public function handle(): void',
+                'public function handle(string $type): void',
+                $actionPath
+            );
+
+            File::replaceInFile(
+                'class Test14',
+                implode(PHP_EOL, [
+                    '/**',
+                    ' * @method static void run(string $type_wrong)',
+                    ' * @method static void dispatch(string $type_wrong)',
+                    ' * @method static void dispatchOn(string $queue, string $type_wrong)',
+                    ' */',
+                    'class Test14',
+                ]),
+                $actionPath
+            );
+
+            $this->artisan(ActionsIdeHelperCommand::class, [
+                '--namespace' => 'App\\Actions',
+                '--dry-run' => true]
+            )
+                ->assertExitCode(0)
+                ->expectsOutputToContain('- @method static void run(string $type_wrong)')
+                ->expectsOutputToContain('- @method static void dispatch(string $type_wrong)')
+                ->expectsOutputToContain('- @method static void dispatchOn(string $queue, string $type_wrong)')
+                ->expectsOutputToContain('+ @method static void run(string $type)')
+                ->expectsOutputToContain('+ @method static void dispatch(string $type)')
+                ->expectsOutputToContain('+ @method static void dispatchOn(string $queue, string $type)');
+        });
+
+        it('handles actions with no handle method', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test15', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test15.php');
+
+            File::replaceInFile(
+                'public function handle(): void',
+                'public function somethingElse(string $type): void',
+                $actionPath
+            );
+
+            $this->artisan(ActionsIdeHelperCommand::class, [
+                '--namespace' => 'App\\Actions',
+                '--dry-run' => true,
+            ])
+                ->assertExitCode(0)
+                ->expectsOutputToContain('No actions found or no changes needed.');
+        });
+
+        it('skips non php files', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test16', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test16.php');
+
+            File::move($actionPath, str_replace('.php', '.txt', $actionPath));
+
+            $this->artisan(ActionsIdeHelperCommand::class, [
+                '--namespace' => 'App\\Actions',
+                '--dry-run' => true,
+            ])
+                ->assertExitCode(0)
+                ->expectsOutputToContain('No actions found or no changes needed.');
+        });
+
+        it('handles text comments on a single line', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test17', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test17.php');
+
+            File::replaceInFile(
+                'public function handle(): void',
+                'public function something(string $type): void',
+                $actionPath
+            );
+
+            File::replaceInFile(
+                'class Test17',
+                implode(PHP_EOL, [
+                    '/** This is a test action',
+                    ' * @method static void run(string $type)',
+                    ' * @method static void dispatch(string $type)',
+                    ' * @method static void dispatchOn(string $queue, string $type)',
+                    ' */',
+                    'class Test17',
+                ]),
+                $actionPath
+            );
+
+            $this->artisan(ActionsIdeHelperCommand::class)
+                ->assertExitCode(0);
+
+            $content = file_get_contents($actionPath);
+            expect($content)->toContain('/** This is a test action */')
+                ->and($content)->not->toContain('@method static void run(string $type)')
+                ->and($content)->not->toContain('@method static void dispatch(string $type)')
+                ->and($content)->not->toContain('@method static void dispatchOn(string $queue, string $type)');
+        });
+
+        it('handles nullable return type', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test18', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test18.php');
+
+            File::replaceInFile(
+                'public function handle(): void',
+                'public function handle(?string $type): ?string',
+                $actionPath
+            );
+
+            $this->artisan(ActionsIdeHelperCommand::class, [
+                '--namespace' => 'App\\Actions',
+                '--dry-run' => true,
+            ])
+                ->assertExitCode(0)
+                ->expectsOutputToContain('@method static string|null run(?string $type)')
+                ->expectsOutputToContain('@method static void dispatch(?string $type)')
+                ->expectsOutputToContain('@method static void dispatchOn(string $queue, ?string $type)');
+        });
+
+        it('handles multiple return types', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test19', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test19.php');
+
+            File::replaceInFile(
+                'public function handle(): void',
+                'public function handle(?string $type): string|bool',
+                $actionPath
+            );
+
+            $this->artisan(ActionsIdeHelperCommand::class, [
+                '--namespace' => 'App\\Actions',
+                '--dry-run' => true,
+            ])
+                ->assertExitCode(0)
+                ->expectsOutputToContain('@method static string|bool run(?string $type)')
+                ->expectsOutputToContain('@method static void dispatch(?string $type)')
+                ->expectsOutputToContain('@method static void dispatchOn(string $queue, ?string $type)');
+        });
+
+        it('handles multiple nullable return types', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test20', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test20.php');
+
+            File::replaceInFile(
+                'public function handle(): void',
+                'public function handle(string|int $type): string|int|null',
+                $actionPath
+            );
+
+            $this->artisan(ActionsIdeHelperCommand::class, [
+                '--namespace' => 'App\\Actions',
+                '--dry-run' => true,
+            ])
+                ->assertExitCode(0)
+                ->expectsOutputToContain('@method static string|int|null run(string|int $type)')
+                ->expectsOutputToContain('@method static void dispatch(string|int $type)')
+                ->expectsOutputToContain('@method static void dispatchOn(string $queue, string|int $type)');
+        });
+
+        it('handles full namespaces', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test21', '--dispatchable' => true]);
+            Artisan::call(MakeActionCommand::class, ['name' => 'Diff\\Test22', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test21.php');
+
+            File::replaceInFile(
+                'public function handle(): void',
+                'public function handle(\\App\\Actions\\Diff\\Test22 $type): void',
+                $actionPath
+            );
+
+            $this->artisan(ActionsIdeHelperCommand::class, [
+                '--namespace' => 'App\\Actions',
+                '--dry-run' => true,
+            ])
+                ->assertExitCode(0)
+                ->expectsOutputToContain('@method static void run(\\App\\Actions\\Diff\\Test22 $type)')
+                ->expectsOutputToContain('@method static void dispatch(\\App\\Actions\\Diff\\Test22 $type)')
+                ->expectsOutputToContain('@method static void dispatchOn(string $queue, \\App\\Actions\\Diff\\Test22 $type)');
+        });
+
+        it('handles full namespaces when included', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test23', '--dispatchable' => true]);
+            Artisan::call(MakeActionCommand::class, ['name' => 'Diff\\Test24', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test23.php');
+
+            File::replaceInFile(
+                'use LumoSolutions\\Actionable\\Traits\\IsDispatchable;',
+                implode(PHP_EOL, [
+                    'use LumoSolutions\\Actionable\\Traits\\IsDispatchable;',
+                    'use App\\Actions\\Diff\\Test24;',
+                ]),
+                $actionPath
+            );
+
+            File::replaceInFile(
+                'public function handle(): void',
+                'public function handle(\\App\\Actions\\Diff\\Test24 $type): \\App\\Actions\\Diff\\Test24',
+                $actionPath
+            );
+
+            $this->artisan(ActionsIdeHelperCommand::class, [
+                '--namespace' => 'App\\Actions',
+                '--dry-run' => true,
+            ])
+                ->assertExitCode(0)
+                ->expectsOutputToContain('@method static Test24 run(Test24 $type)')
+                ->expectsOutputToContain('@method static void dispatch(Test24 $type)')
+                ->expectsOutputToContain('@method static void dispatchOn(string $queue, Test24 $type)');
+        });
+
+        it('handles grouped using statements', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test25', '--dispatchable' => true]);
+            Artisan::call(MakeActionCommand::class, ['name' => 'Diff\\Test26', '--dispatchable' => true]);
+            Artisan::call(MakeActionCommand::class, ['name' => 'Diff\\Test27', '--dispatchable' => true]);
+            Artisan::call(MakeActionCommand::class, ['name' => 'Diff\\Test28', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test25.php');
+
+            File::replaceInFile(
+                'use LumoSolutions\\Actionable\\Traits\\IsDispatchable;',
+                implode(PHP_EOL, [
+                    'use LumoSolutions\\Actionable\\Traits\\IsDispatchable;',
+                    'use App\\Actions\\Diff\\{Test26, Test27, Test28};',
+                ]),
+                $actionPath
+            );
+
+            File::replaceInFile(
+                'public function handle(): void',
+                'public function handle(\\App\\Actions\\Diff\\Test26 $type): \\App\\Actions\\Diff\\Test27',
+                $actionPath
+            );
+
+            $this->artisan(ActionsIdeHelperCommand::class, [
+                '--namespace' => 'App\\Actions',
+                '--dry-run' => true,
+            ])
+                ->assertExitCode(0)
+                ->expectsOutputToContain('@method static Test27 run(Test26 $type)')
+                ->expectsOutputToContain('@method static void dispatch(Test26 $type)')
+                ->expectsOutputToContain('@method static void dispatchOn(string $queue, Test26 $type)');
+        });
+
+        it('handles single line use statements', function () {
+            Artisan::call(MakeActionCommand::class, ['name' => 'Test29', '--dispatchable' => true]);
+            Artisan::call(MakeActionCommand::class, ['name' => 'Diff\\Test30', '--dispatchable' => true]);
+            Artisan::call(MakeActionCommand::class, ['name' => 'Diff\\Test31', '--dispatchable' => true]);
+            $actionPath = join_paths(app_path(), 'Actions', 'Test29.php');
+
+            File::replaceInFile(
+                'use LumoSolutions\\Actionable\\Traits\\IsDispatchable;',
+                implode(PHP_EOL, [
+                    'use LumoSolutions\\Actionable\\Traits\\IsDispatchable;',
+                    'use App\\Actions\\Diff\\Test30, App\\Actions\\Diff\\Test31;',
+                ]),
+                $actionPath
+            );
+
+            File::replaceInFile(
+                'public function handle(): void',
+                'public function handle(\\App\\Actions\\Diff\\Test30 $type): \\App\\Actions\\Diff\\Test31',
+                $actionPath
+            );
+
+            $this->artisan(ActionsIdeHelperCommand::class, [
+                '--namespace' => 'App\\Actions',
+                '--dry-run' => true,
+            ])
+                ->assertExitCode(0)
+                ->expectsOutputToContain('@method static Test31 run(Test30 $type)')
+                ->expectsOutputToContain('@method static void dispatch(Test30 $type)')
+                ->expectsOutputToContain('@method static void dispatchOn(string $queue, Test30 $type)');
+        });
     });
 });

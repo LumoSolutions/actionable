@@ -25,6 +25,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "App\\": "vendor/orchestra/testbench-core/laravel/app",
             "LumoSolutions\\Actionable\\Tests\\": "tests/"
         }
     },
@@ -37,7 +38,7 @@
         "format": "vendor/bin/pint"
     },
     "require": {
-        "php": ">=8.2"
+        "php": ">=8.3"
     },
     "require-dev": {
         "larastan/larastan": "^2.9||^3.0",
